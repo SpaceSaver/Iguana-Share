@@ -1,5 +1,5 @@
 const path = require("path");
-// const Discord = require("discord.js");
+const Discord = require("discord.js");
 
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
