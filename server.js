@@ -1,4 +1,5 @@
 const path = require("path");
+const {}
 
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
@@ -33,7 +34,7 @@ fastify.get("/", function (request, reply) {
 });
 
 // A POST route to handle form submissions
-fastify.post("/", function (request, reply) {
+fastify.post("/upload", function (request, reply) {
   let params = {
     greeting: "Hello Form!",
   };

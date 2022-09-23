@@ -5,7 +5,7 @@
     <link rel="icon" href="https://glitch.com/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Ynow beta</title>
+    <title>Iguana Share beta</title>
 
     <!-- import the webpage's stylesheet -->
     <link rel="stylesheet" href="/style.css" />   
@@ -14,12 +14,15 @@
     
     <!-- this is the start of content -->
     <h1>
-      {{ greeting }}
+      Welcome to Iguana Share beta!
     </h1>
     <p>
-      Ynow is an app that answers the complex question of: <i>Why not just store your files on Discord?</i>
-      <form>
+      Iguana Share is an app that answers the complex question of: <i>Why not just store your files on Discord?</i>
+      <form action="/upload" method="POST">
         <label for=""></label>
+        <input type="file" id="fileUpload" name="filename" required>
+        <br>
+        <input type="submit" value="Upload ☁️">
     </form>
     </p>
         
