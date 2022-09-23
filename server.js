@@ -1,5 +1,5 @@
 const path = require("path");
-const {}
+// const Discord = require("discord.js");
 
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
@@ -39,7 +39,7 @@ fastify.post("/upload", function (request, reply) {
     greeting: "Hello Form!",
   };
   // request.body.paramName <-- a form post example
-  return reply.view("/src/pages/index.hbs", params);
+  return reply.view("/src/pages/upload.hbs", params);
 });
 
 // Run the server and report out to the logs
