@@ -1,32 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="https://glitch.com/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Iguana Share beta</title>
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="https://glitch.com/favicon.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- import the webpage's stylesheet -->
-    <link rel="stylesheet" href="/style.css" />   
-  </head>
-  <body>
-    
-    <!-- this is the start of content -->
-    <h1>
-      Welcome to Iguana Share beta!
-    </h1>
-    <p>
-      Iguana Share is an app that answers the complex question of: <i>Why not just store your files on Discord?</i>
-      <form action="/upload" method="POST">
-        <label for=""></label>
-        <input type="file" id="fileUpload" name="filename" required>
-        <br>
-        <input type="submit" value="Upload ☁️">
-        <br>
-        <progress id="uploadp" value="32" max="100">32%</progress>
-    </form>
-    </p>
-        
-  </body>
+	<title>Iguana Share beta</title>
+
+	<!-- import the webpage's stylesheet -->
+	<link rel="stylesheet" href="/style.css" />
+	<script src="/index.js"></script>
+</head>
+
+<body>
+
+	<!-- this is the start of content -->
+	<h1>
+		Welcome to Iguana Share beta!
+	</h1>
+	<p>
+		Iguana Share is an app that answers the complex question of: <i>Why not just store your files on Discord?</i>
+	<div>
+		<label for="fileUpload"></label>
+		<input type="file" id="fileUpload" name="filename" required>
+		<br>
+		<input type="button" value="Upload ☁️" id="upload"/>
+		<br>
+		<progress id="uploadp" value="32" max="100">32%</progress>
+		<br>
+		<a style="display: none;" id="download"></a>
+	</div>
+	</p>
+
+</body>
+
 </html>
