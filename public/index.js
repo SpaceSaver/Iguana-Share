@@ -6,7 +6,6 @@ window.onload = () => {
   });
 };
 async function FileUpload(file) {
-  const reader = file.stream().getReader();
   const total = file.size;
   const pbar = document.getElementById("uploadp");
   function updateProgress(progress) {
@@ -29,22 +28,18 @@ async function FileUpload(file) {
   uploadUrl.searchParams.set("title", file.name);
   uploadUrl.searchParams.set("author", "guest");
   (await fetch(uploadUrl, {method: "POST"})).text().then(async id => {
-    let nextrun = await reader.read(1000000);
-    let thisrun = undefined;
     let progress = 0;
-    let response = undefined;
     while (true) {
-      thisrun = nextrun;
-      nextrun = await reader.read(1000000);
-      response = await fetch("/upload/" + id + (nextrun.done ? "?end=1" : ""), {
-        body: thisrun.value,
+      const piece = file.slice(progress, progress + 1000000);
+      progress += piece.size;
+      response = await fetch("/upload/" + id + ((progress >= total) ? "?end=1" : ""), {
+        body: piece,
         headers: {"Content-Type": "application/octet-stream"},
         method: "POST"
       });
-      if (nextrun.done) {
+      if (progress >= total) {
         break;
       }
-      progress += thisrun.value.length;
       updateProgress(progress);
     }
     progressFinish();

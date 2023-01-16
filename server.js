@@ -27,6 +27,9 @@ const DiscordPromise = new Promise((resolve) => {
  * author: Author name
  * stream: readable stream with incoming data to write
  * prevReq: previous request (so to know if it's safe to start writing new request)
+ * end: defined once last request comes in to provide a place for final information (last request)
+ * timeout: the current timeout that can be canceled and replaced upon a new request
+ * 
  */
 let activeUploads = {};
 
@@ -98,13 +101,20 @@ fastify.post("/upload", (request, reply) => {
 			const reply = activeUploads[id].end;
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
 			reply.code(200);
-			resolve(activeUploads[id].send(writter));
+			resolve(reply.send(writter));
 		}).catch(err => {
 			console.log(err);
-			const reply = activeUploads[id].end;
+			if (activeUploads[id] && activeUploads[id].end) {
+				const reply = activeUploads[id].end;
+			}
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
-			reply.code(500);
-			resolve(reply.send("Cancel"));
+			if (reply) {
+				reply.code(500);
+				resolve(reply.send("Cancel"));
+			}
+			else {
+				resolve();
+			}
 		});
 	}));
 	// reply.
@@ -138,6 +148,15 @@ fastify.post("/upload/:id", (request, reply) => {
 				resolve(reply.send("Okay, keep going..."));
 			});
 		}
+		if (upload.timeout) {
+			clearTimeout(upload.timeout);
+		}
+		upload.timeout = setTimeout(() => {
+			if (activeUploads[id]) {
+				activeUploads[id].stream.end();
+				delete activeUploads[id];
+			}
+		}, 60000);
 		request.raw.pipe(activeUploads[id].stream, { end: (!!request.query.end) });
 	}))
 })
@@ -206,7 +225,7 @@ async function discordUpload(id) {
 			// upload.parts.push(message.attachments.at(0).url)
 			upload.parts.push(`${message.channelId}/${message.id}`);
 			chunk = upload.stream.read(8388608);
-			await sleep(500);
+			await sleep(250);
 		}
 	}
 }
