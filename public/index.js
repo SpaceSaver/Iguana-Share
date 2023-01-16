@@ -5,37 +5,48 @@ window.onload = () => {
     FileUpload(selectedFile);
   });
 };
-function FileUpload(file) {
-  const reader = new FileReader();
-  const xhr = new XMLHttpRequest();
-  this.xhr = xhr;
+async function FileUpload(file) {
+  const reader = file.stream().getReader();
+  const total = file.size;
   const pbar = document.getElementById("uploadp");
-  const self = this;
-  this.xhr.upload.addEventListener("progress", (e) => {
-    if (e.lengthComputable) {
-      const percentage = Math.round((e.loaded * 100) / e.total);
+  function updateProgress(progress) {
+    if (progress) {
+      const percentage = Math.round((progress * 100) / total);
       pbar.textContent = percentage + "%";
       pbar.value = percentage;
     }
-  }, false);
-
-  xhr.upload.addEventListener("load", (e) => {
+  }
+  function progressFinish() {
     pbar.value = 100;
     pbar.textContent = "100%";
-  }, false);
-  xhr.addEventListener("load", () => {
-    document.getElementById("download").href = `${(new URL(location.href)).origin}/download/${xhr.responseText}`;
-    document.getElementById("download").textContent = `${(new URL(location.href)).origin}/download/${xhr.responseText}`;
+  }
+  function updateAvailableURL(text) {
+    document.getElementById("download").href = `${(new URL(location.href)).origin}/download/${text}`;
+    document.getElementById("download").textContent = `${(new URL(location.href)).origin}/download/${text}`;
     document.getElementById("download").style.display = "";
-  })
+  }
   const uploadUrl = new URL("/upload", window.location.href);
   uploadUrl.searchParams.set("title", file.name);
   uploadUrl.searchParams.set("author", "guest");
-  xhr.open("POST", uploadUrl);
-  // xhr.overrideMimeType('application/octet-stream');
-  xhr.setRequestHeader("Content-Type", "application/octet-stream");
-  reader.onload = (evt) => {
-    xhr.send(evt.target.result);
-  };
-  reader.readAsArrayBuffer(file);
+  (await fetch(uploadUrl, {method: "POST"})).text().then(async id => {
+    let nextrun = await reader.read(1000000);
+    let thisrun = undefined;
+    let progress = 0;
+    let response = undefined;
+    while (true) {
+      thisrun = nextrun;
+      nextrun = await reader.read(1000000);
+      response = await fetch("/upload/" + id + (nextrun.done ? "?end=1" : ""), {
+        body: thisrun.value,
+        headers: {"Content-Type": "application/octet-stream"},
+        method: "POST"
+      });
+      if (nextrun.done) {
+        break;
+      }
+      progress += 1000000;
+    }
+    progressFinish();
+    response.text().then(updateAvailableURL);
+  })
 }

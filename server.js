@@ -25,7 +25,8 @@ const DiscordPromise = new Promise((resolve) => {
  * Active upload format
  * title: Filename
  * author: Author name
- * 
+ * stream: readable stream with incoming data to write
+ * prevReq: previous request (so to know if it's safe to start writing new request)
  */
 let activeUploads = {};
 
@@ -90,25 +91,55 @@ fastify.post("/upload", (request, reply) => {
 			id = Math.floor(Math.random()*Math.pow(10, 10)).toString();
 		}
 		activeUploads[id] = { title: request.query.title, author: request.query.author, stream: new Stream.PassThrough({highWaterMark: 40000000}), parts: [] };
-		discordUpload(id).then(async () => {
+		reply.code(201);
+    resolve(reply.send(id));
+    discordUpload(id).then(async () => {
 			const writter = await writeMeta(id);
+      const reply = activeUploads[id].end;
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
 			reply.code(200);
-			resolve(reply.send(writter));
+			resolve(activeUploads[id].send(writter));
 		}).catch(err => {
-			reply.code(500);
+      console.log(err);
+			const reply = activeUploads[id].end;
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
+      reply.code(500);
 			console.log(err);
 			resolve(reply.send("Cancel"));
 		});
-		
-		request.raw.pipe(activeUploads[id].stream, true);
-		// request.raw.on("data", data => activeUploads[id].stream.write(data));
-		// request.raw.on("end", () => activeUploads[id].stream.end());
-		
 	}));
 	// reply.
 });
+
+fastify.post("/upload/:id", (request, reply) => {
+  return (new Promise(async (resolve) => {
+    const { id } = request.params;
+    const upload = activeUploads[id];
+    if (!activeUploads[id]) {
+      reply.code(404);
+      resolve(reply.send("Upload id does not exist."));
+    }
+    if (activeUploads[id].prevReq) {
+      if (!activeUploads[id].prevReq.readableEnded) {
+        await (new Promise((resolve) => {
+          activeUploads[id].prevReq.on("end", resolve);
+        }));
+      }
+    }
+    activeUploads[id].prevReq = request.raw;
+    if (request.query.end) {
+      activeUploads[id].end = reply;
+    }
+    else {
+      request.raw.on("end", () => {
+        reply.code(200);
+        resolve(reply.send("Okay, keep going..."));
+      });
+    }
+    console.log(request.query.end)
+		request.raw.pipe(activeUploads[id].stream, !!request.query.end);
+  }))
+})
 
 fastify.get("/download/:fileid", (request, reply) => {
 	const { fileid } = request.params;
