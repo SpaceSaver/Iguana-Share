@@ -5,44 +5,33 @@ window.onload = () => {
     FileUpload(selectedFile);
   });
 };
-async function FileUpload(file) {
-  const total = file.size;
+function FileUpload(file) {
+  const xhr = new XMLHttpRequest();
+  this.xhr = xhr;
   const pbar = document.getElementById("uploadp");
-  function updateProgress(progress) {
-    if (progress) {
-      const percentage = Math.round((progress * 100) / total);
+  const self = this;
+  this.xhr.upload.addEventListener("progress", (e) => {
+    if (e.lengthComputable) {
+      const percentage = Math.round((e.loaded * 100) / e.total);
       pbar.textContent = percentage + "%";
       pbar.value = percentage;
     }
-  }
-  function progressFinish() {
+  }, false);
+
+  xhr.upload.addEventListener("load", (e) => {
     pbar.value = 100;
     pbar.textContent = "100%";
-  }
-  function updateAvailableURL(text) {
-    document.getElementById("download").href = `${(new URL(location.href)).origin}/download/${text}`;
-    document.getElementById("download").textContent = `${(new URL(location.href)).origin}/download/${text}`;
+  }, false);
+  xhr.addEventListener("load", () => {
+    document.getElementById("download").href = `${(new URL(location.href)).origin}/download/${xhr.responseText}`;
+    document.getElementById("download").textContent = `${(new URL(location.href)).origin}/download/${xhr.responseText}`;
     document.getElementById("download").style.display = "";
-  }
+  })
   const uploadUrl = new URL("/upload", window.location.href);
   uploadUrl.searchParams.set("title", file.name);
   uploadUrl.searchParams.set("author", "guest");
-  (await fetch(uploadUrl, {method: "POST"})).text().then(async id => {
-    let progress = 0;
-    while (true) {
-      const piece = file.slice(progress, progress + 1000000);
-      progress += piece.size;
-      response = await fetch("/upload/" + id + ((progress >= total) ? "?end=1" : ""), {
-        body: piece,
-        headers: {"Content-Type": "application/octet-stream"},
-        method: "POST"
-      });
-      if (progress >= total) {
-        break;
-      }
-      updateProgress(progress);
-    }
-    progressFinish();
-    response.text().then(updateAvailableURL);
-  })
+  xhr.open("POST", uploadUrl);
+  // xhr.overrideMimeType('application/octet-stream');
+  xhr.setRequestHeader("Content-Type", "application/octet-stream");
+  xhr.send(file);
 }
