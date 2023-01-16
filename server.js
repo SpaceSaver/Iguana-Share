@@ -5,7 +5,7 @@ const fetch = require("node-fetch");
 require("dotenv").config();
 const { Client, Intents } = require("discord.js");
 const Discord = require("discord.js");
-const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 client.login(process.env["TOKEN"]);
 client.on("rateLimit", console.log)
 /**
@@ -40,7 +40,7 @@ let activeUploads = {};
  * Last line: blank
  */
 function sleep(ms) {
-	return (new Promise((resolve) => {setTimeout(resolve, ms)}));
+	return (new Promise((resolve) => { setTimeout(resolve, ms) }));
 }
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
@@ -86,25 +86,24 @@ fastify.get("/", function (request, reply) {
  */
 fastify.post("/upload", (request, reply) => {
 	return (new Promise(async (resolve) => {
-		let id = Math.floor(Math.random()*Math.pow(10, 10)).toString();
+		let id = Math.floor(Math.random() * Math.pow(10, 10)).toString();
 		while (activeUploads[id]) {
-			id = Math.floor(Math.random()*Math.pow(10, 10)).toString();
+			id = Math.floor(Math.random() * Math.pow(10, 10)).toString();
 		}
-		activeUploads[id] = { title: request.query.title, author: request.query.author, stream: new Stream.PassThrough({highWaterMark: 40000000}), parts: [] };
+		activeUploads[id] = { title: request.query.title, author: request.query.author, stream: new Stream.PassThrough({ highWaterMark: 40000000 }), parts: [] };
 		reply.code(201);
-    resolve(reply.send(id));
-    discordUpload(id).then(async () => {
+		resolve(reply.send(id));
+		discordUpload(id).then(async () => {
 			const writter = await writeMeta(id);
-      const reply = activeUploads[id].end;
+			const reply = activeUploads[id].end;
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
 			reply.code(200);
 			resolve(activeUploads[id].send(writter));
 		}).catch(err => {
-      console.log(err);
+			console.log(err);
 			const reply = activeUploads[id].end;
 			if (activeUploads.hasOwnProperty(id)) delete activeUploads[id];
-      reply.code(500);
-			console.log(err);
+			reply.code(500);
 			resolve(reply.send("Cancel"));
 		});
 	}));
@@ -115,33 +114,32 @@ function transparent(input) {
 	return input;
 }
 fastify.post("/upload/:id", (request, reply) => {
-  return (new Promise(async (resolve) => {
-    const { id } = request.params;
-    const upload = activeUploads[id];
-    if (!activeUploads[id]) {
-      reply.code(404);
-      resolve(reply.send("Upload id does not exist."));
-    }
-    if (activeUploads[id].prevReq) {
-      if (!activeUploads[id].prevReq.readableEnded) {
-        await (new Promise((resolve) => {
-          activeUploads[id].prevReq.on("end", resolve);
-        }));
-      }
-    }
-    activeUploads[id].prevReq = request.raw;
-    if (request.query.end) {
-      activeUploads[id].end = reply;
-    }
-    else {
-      request.raw.on("end", () => {
-        reply.code(200);
-        resolve(reply.send("Okay, keep going..."));
-      });
-    }
-    console.log(request.query.end)
-		request.raw.pipe(activeUploads[id].stream, {end: transparent(!!request.query.end)});
-  }))
+	return (new Promise(async (resolve) => {
+		const { id } = request.params;
+		const upload = activeUploads[id];
+		if (!activeUploads[id]) {
+			reply.code(404);
+			resolve(reply.send("Upload id does not exist."));
+		}
+		if (activeUploads[id].prevReq) {
+			if (!activeUploads[id].prevReq.readableEnded) {
+				await (new Promise((resolve) => {
+					activeUploads[id].prevReq.on("end", resolve);
+				}));
+			}
+		}
+		activeUploads[id].prevReq = request.raw;
+		if (request.query.end) {
+			activeUploads[id].end = reply;
+		}
+		else {
+			request.raw.on("end", () => {
+				reply.code(200);
+				resolve(reply.send("Okay, keep going..."));
+			});
+		}
+		request.raw.pipe(activeUploads[id].stream, { end: (!!request.query.end) });
+	}))
 })
 
 fastify.get("/download/:fileid", (request, reply) => {
@@ -183,7 +181,7 @@ async function discordUpload(id) {
 	const upload = activeUploads[id];
 	console.log("Waiting patiently...");
 	await (new Promise((resolve) => upload.stream.once("readable", resolve)));
-	upload.stream.on("readable", () => 1==1);
+	upload.stream.on("readable", () => 1 == 1);
 	console.log("Getting bored...");
 	let finished = false;
 	upload.stream.once("end", () => finished = true);
@@ -214,7 +212,7 @@ async function discordUpload(id) {
 }
 async function writeMeta(id) {
 	const upload = activeUploads[id];
-	let meta_string = `1\n${Buffer.from(upload.title, 'utf8').toString("base64")}\n${Date.now()/1000}\n${Buffer.from(upload.author, 'utf8').toString("base64")}\n`;
+	let meta_string = `1\n${Buffer.from(upload.title, 'utf8').toString("base64")}\n${Date.now() / 1000}\n${Buffer.from(upload.author, 'utf8').toString("base64")}\n`;
 	upload.parts.forEach(seg => {
 		meta_string += seg + "\n";
 	});

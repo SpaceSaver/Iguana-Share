@@ -44,7 +44,7 @@ async function FileUpload(file) {
       if (nextrun.done) {
         break;
       }
-      progress += 1000000;
+      progress += thisrun.value.length;
       updateProgress(progress);
     }
     progressFinish();
