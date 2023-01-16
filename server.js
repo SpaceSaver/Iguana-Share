@@ -154,7 +154,7 @@ async function discordUpload(id) {
 	let finished = false;
 	upload.stream.once("end", () => finished = true);
 	while (!finished) {
-		console.log("Waiting for a readable...");
+		// console.log("Waiting for a readable...");
 		await (new Promise((resolve) => upload.stream.once("readable", resolve)));
 		chunk = upload.stream.read(8388608);
 		while (chunk) {
@@ -174,7 +174,7 @@ async function discordUpload(id) {
 			// upload.parts.push(message.attachments.at(0).url)
 			upload.parts.push(`${message.channelId}/${message.id}`);
 			chunk = upload.stream.read(8388608);
-			await sleep(250);
+			await sleep(100);
 		}
 	}
 }
