@@ -110,7 +110,10 @@ fastify.post("/upload", (request, reply) => {
 	}));
 	// reply.
 });
-
+function transparent(input) {
+	console.log(input);
+	return input;
+}
 fastify.post("/upload/:id", (request, reply) => {
   return (new Promise(async (resolve) => {
     const { id } = request.params;
@@ -137,7 +140,7 @@ fastify.post("/upload/:id", (request, reply) => {
       });
     }
     console.log(request.query.end)
-		request.raw.pipe(activeUploads[id].stream, !!request.query.end);
+		request.raw.pipe(activeUploads[id].stream, {end: transparent(!!request.query.end)});
   }))
 })
 
